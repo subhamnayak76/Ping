@@ -17,9 +17,10 @@ const listenAdrr = "0.0.0.0"
 func main(){
 	dest := os.Args[1]
 	destaddr ,err := net.ResolveIPAddr("ip4",dest)
+	
 	if err != nil {
 		fmt.Printf("error resolving destination")
-		os.Exit(1)
+		return
 	}
 	conn,err := icmp.ListenPacket("ip4:icmp",listenAdrr)
 	if err != nil {
@@ -39,12 +40,12 @@ func main(){
 	msgdata ,err := msg.Marshal(nil)
 	if err != nil {
 		fmt.Printf("erro will marshaling the icmp %v\n",err)
-		os.Exit(1)
+		return
 	}
 	startTime := time.Now()
 	if _,err := conn.WriteTo(msgdata,destaddr);err != nil {
 		fmt.Printf("error while sending the data %v\n",err)
-		os.Exit(1)
+		return
 	}
 	fmt.Printf("Pinging  %s (%s) with %d bytes of data\n",dest,destaddr.String(),len(msgdata))
 
@@ -52,20 +53,20 @@ func main(){
 	err = conn.SetReadDeadline(time.Now().Add(5*time.Second))
 	if err != nil {
 		fmt.Printf("error setting in readline deadline :%v\n",err)
-		os.Exit(1)
+		return
 	}
 
 	n,peer,err := conn.ReadFrom(replydata)
 	if err != nil {
 		fmt.Printf("error while getting the result")
-		os.Exit(1)
+		return
 	}
 	rtt := time.Since(startTime)
 
 	replymsg,err := icmp.ParseMessage(1,replydata[:n])
 	if err != nil {
 		fmt.Printf("error while parsing the icmp message repy %v\n",err)
-		os.Exit(1)
+		return
 	}
 
 	switch replymsg.Type {
